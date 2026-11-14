@@ -1,83 +1,69 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { getSupabaseEnv, supabaseCookieOptions } from "@/lib/supabase/env";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/clients", "/leads"];
-
-function isProtectedPath(pathname: string) {
-  return PROTECTED_PREFIXES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
-}
-
-function copyCookies(from: NextResponse, to: NextResponse) {
-  const setCookies = from.headers.getSetCookie();
-
-  if (setCookies.length > 0) {
-    for (const cookie of setCookies) {
-      to.headers.append("set-cookie", cookie);
-    }
-    return to;
-  }
-
-  from.cookies.getAll().forEach(({ name, value }) => {
-    to.cookies.set(name, value);
-  });
-  return to;
-}
-
-/**
- * Refreshes the Supabase session and applies the optimistic route guard.
- * Pages and API handlers still check the user themselves. Proxy is not the
- * only security layer.
- */
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  let url: string;
-  let key: string;
-
-  try {
-    ({ url, key } = getSupabaseEnv());
-  } catch {
-    return supabaseResponse;
-  }
-
-  const supabase = createServerClient(url, key, {
-    cookieOptions: supabaseCookieOptions,
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => {
-          request.cookies.set(name, value);
-        });
-
-        supabaseResponse = NextResponse.next({ request });
-
-        cookiesToSet.forEach(({ name, value, options }) => {
-          supabaseResponse.cookies.set(name, value, options);
-        });
-      },
-    },
+  let supabaseResponse = NextResponse.next({
+    request,
   });
 
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+
+        setAll(cookiesToSet, headers) {
+          cookiesToSet.forEach(({ name, value }) => {
+            request.cookies.set(name, value);
+          });
+
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+
+          cookiesToSet.forEach(({ name, value, options }) => {
+            supabaseResponse.cookies.set(name, value, options);
+          });
+
+          if (headers) {
+            Object.entries(headers).forEach(([name, value]) => {
+              supabaseResponse.headers.set(name, value);
+            });
+          }
+        },
+      },
+    }
+  );
+
+  // Verify the authentication token.
   const { data, error } = await supabase.auth.getClaims();
-  const userId =
-    error || typeof data?.claims?.sub !== "string" ? null : data.claims.sub;
+  const claims = data?.claims ?? null;
+  const user = error ? null : claims;
 
-  const { pathname } = request.nextUrl;
-  const isAuthPage = pathname === "/login" || pathname === "/register";
+  const pathname = request.nextUrl.pathname;
 
-  if (isProtectedPath(pathname) && !userId) {
-    const redirect = NextResponse.redirect(new URL("/login", request.url));
-    return copyCookies(supabaseResponse, redirect);
+  const isProtectedRoute =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/clients");
+
+  const isAuthRoute =
+    pathname === "/login" ||
+    pathname === "/register";
+
+  if (isProtectedRoute && !user) {
+    const redirectUrl = new URL("/login", request.url);
+    redirectUrl.searchParams.set("next", pathname);
+
+    return NextResponse.redirect(redirectUrl);
   }
 
-  if (isAuthPage && userId) {
-    const redirect = NextResponse.redirect(new URL("/dashboard", request.url));
-    return copyCookies(supabaseResponse, redirect);
+  if (isAuthRoute && user) {
+    return NextResponse.redirect(
+      new URL("/dashboard", request.url)
+    );
   }
 
   return supabaseResponse;

@@ -37,12 +37,7 @@ export function validatePassword(value: unknown) {
   return null;
 }
 
-export function validateClientInput(input: {
-  name: unknown;
-  email: unknown;
-  phone: unknown;
-  company: unknown;
-}) {
+export function validateClientInput(input: Record<string, unknown>) {
   const name = cleanText(input.name);
   if (!name) return { error: "name_required" as const };
   if (name.length > 100) return { error: "name_too_long" as const };
@@ -68,12 +63,7 @@ export function validateClientInput(input: {
   };
 }
 
-export function validateLeadInput(input: {
-  title: unknown;
-  client_id: unknown;
-  value: unknown;
-  status: unknown;
-}) {
+export function validateLeadInput(input: Record<string, unknown>) {
   const title = cleanText(input.title);
   if (!title) return { error: "title_required" as const };
   if (title.length > 150) return { error: "title_too_long" as const };

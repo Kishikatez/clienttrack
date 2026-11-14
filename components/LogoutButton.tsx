@@ -1,21 +1,31 @@
 "use client";
 
-import { LogOut } from "lucide-react";
-import { logout } from "@/app/auth/actions";
+import { useRouter } from "next/navigation";
 import { useI18n } from "@/components/I18nProvider";
+import { createClient } from "@/lib/supabase/client";
 
 export function LogoutButton() {
+  const router = useRouter();
   const { t } = useI18n();
 
+  async function handleLogout() {
+    const supabase = createClient();
+
+    await supabase.auth.signOut();
+
+    router.replace("/login");
+    router.refresh();
+  }
+
   return (
-    <form action={logout}>
-      <button
-        type="submit"
-        className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-medium text-[#0f2744] hover:bg-slate-50"
-      >
-        <LogOut className="size-4" aria-hidden />
-        {t("logout")}
-      </button>
-    </form>
+    <button
+      type="button"
+      onClick={handleLogout}
+      className="rounded-lg bg-red-600 px-5 py-3 text-white hover:bg-red-700"
+    >
+      {t("logout")}
+    </button>
   );
 }
+
+export default LogoutButton;

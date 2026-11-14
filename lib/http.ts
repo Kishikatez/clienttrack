@@ -8,9 +8,17 @@ export function apiError(error: string, status: number) {
 export async function requireApiUser() {
   const context = await getAuthContext();
   if (!context.user) {
-    return { ...context, response: apiError("unauthorized", 401) };
+    return {
+      supabase: context.supabase,
+      user: null,
+      response: apiError("unauthorized", 401),
+    };
   }
-  return { ...context, response: null };
+  return {
+    supabase: context.supabase,
+    user: context.user,
+    response: null,
+  };
 }
 
 export function pageParams(url: URL, fallbackSize = 8) {

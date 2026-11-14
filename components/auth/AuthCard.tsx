@@ -12,9 +12,11 @@ const initial: AuthState = {};
 export function AuthCard({
   mode,
   notice,
+  title,
 }: {
   mode: "login" | "register";
   notice?: string;
+  title?: string;
 }) {
   const { t, errorText } = useI18n();
   const action = mode === "login" ? login : register;
@@ -26,19 +28,29 @@ export function AuthCard({
       <main className="mx-auto flex w-full max-w-md flex-col px-4 py-12">
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-semibold text-[#0f2744]">
-            {mode === "login" ? t("loginTitle") : t("registerTitle")}
+            {title ?? (mode === "login" ? t("loginTitle") : t("registerTitle"))}
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             {mode === "login" ? t("loginSubtitle") : t("registerSubtitle")}
           </p>
 
           <div className="mt-4 space-y-3">
-            {notice ? <Banner tone="error">{errorText(notice)}</Banner> : null}
+            {notice ? (
+              <Banner tone={notice === "registration_success" ? "ok" : "error"}>
+                {errorText(notice)}
+              </Banner>
+            ) : null}
             {state.error ? <Banner tone="error">{errorText(state.error)}</Banner> : null}
             {state.message ? <Banner tone="ok">{errorText(state.message)}</Banner> : null}
           </div>
 
           <form action={formAction} className="mt-5 space-y-4">
+            {mode === "register" ? (
+              <label className="block">
+                <span className={labelClass}>{t("name")}</span>
+                <input className={fieldClass} name="name" autoComplete="name" required maxLength={100} />
+              </label>
+            ) : null}
             <label className="block">
               <span className={labelClass}>{t("email")}</span>
               <input className={fieldClass} name="email" type="email" autoComplete="email" required dir="ltr" />

@@ -30,14 +30,14 @@ export async function POST(request: Request) {
   if (!auth.user) return auth.response;
 
   const body = await readJson(request);
-  if ("error" in body) return apiError(body.error, 400);
+  if ("error" in body && body.error) return apiError(body.error, 400);
 
   const parsed = validateLeadInput(body.data);
-  if ("error" in parsed) return apiError(parsed.error, 400);
+  if ("error" in parsed && parsed.error) return apiError(parsed.error, 400);
 
   try {
     const result = await createLead(auth.supabase, auth.user.id, parsed.data);
-    if ("error" in result) {
+    if ("error" in result && result.error) {
       return apiError(result.error, result.error === "client_not_found" ? 404 : 400);
     }
     return NextResponse.json(result.data, { status: 201 });

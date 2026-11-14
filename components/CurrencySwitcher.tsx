@@ -1,31 +1,17 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useTransition } from "react";
-import { setCurrency } from "@/app/actions/preferences";
 import { useI18n } from "@/components/I18nProvider";
 import type { Currency } from "@/lib/format";
 
 export function CurrencySwitcher() {
-  const { currency, t } = useI18n();
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-
-  function choose(next: Currency) {
-    if (next === currency) return;
-    startTransition(async () => {
-      await setCurrency(next);
-      router.refresh();
-    });
-  }
+  const { currency, setCurrency, t } = useI18n();
 
   return (
     <label className="inline-flex items-center gap-2 text-sm text-slate-600">
       <span className="sr-only">{t("currency")}</span>
       <select
         value={currency}
-        disabled={pending}
-        onChange={(event) => choose(event.target.value as Currency)}
+        onChange={(event) => setCurrency(event.target.value as Currency)}
         className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-[#0f2744] outline-none focus:ring-2 focus:ring-indigo-500"
         dir="ltr"
       >

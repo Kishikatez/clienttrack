@@ -30,14 +30,14 @@ export async function PATCH(request: Request, context: Context) {
   if (!isUuid(id)) return apiError("invalid_id", 400);
 
   const body = await readJson(request);
-  if ("error" in body) return apiError(body.error, 400);
+  if ("error" in body && body.error) return apiError(body.error, 400);
 
   const parsed = validateLeadInput(body.data);
-  if ("error" in parsed) return apiError(parsed.error, 400);
+  if ("error" in parsed && parsed.error) return apiError(parsed.error, 400);
 
   try {
     const result = await updateLead(auth.supabase, auth.user.id, id, parsed.data);
-    if ("error" in result) {
+    if ("error" in result && result.error) {
       const status = result.error === "not_found" || result.error === "client_not_found" ? 404 : 400;
       return apiError(result.error, status);
     }
@@ -56,7 +56,7 @@ export async function DELETE(_request: Request, context: Context) {
   if (!isUuid(id)) return apiError("invalid_id", 400);
 
   const result = await deleteLead(auth.supabase, auth.user.id, id);
-  if ("error" in result) {
+  if ("error" in result && result.error) {
     return apiError(result.error, result.error === "not_found" ? 404 : 400);
   }
   return NextResponse.json({ ok: true });

@@ -21,11 +21,13 @@ const codes: Record<string, MessageKey> = {
   delete_blocked: "deleteBlocked",
   save_failed: "saveFailed",
   load_failed: "loadFailed",
+  stats_load_failed: "statsLoadFailed",
   invalid_credentials: "invalidCredentials",
   email_not_confirmed: "emailNotConfirmed",
   user_exists: "userExists",
   auth_failed: "authFailed",
   check_email: "checkEmail",
+  registration_success: "registrationSuccess",
   verification: "verificationFailed",
   invalid_id: "invalidId",
 };

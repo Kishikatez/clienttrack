@@ -35,9 +35,12 @@ export async function login(_state: AuthState, formData: FormData): Promise<Auth
 }
 
 export async function register(_state: AuthState, formData: FormData): Promise<AuthState> {
+  const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirmPassword") ?? "");
+  if (!name) return { error: "name_required" };
+  if (name.length > 100) return { error: "name_too_long" };
   const emailError = validateEmail(email, true);
   if (emailError) return { error: emailError };
   const passwordError = validatePassword(password);
@@ -48,7 +51,10 @@ export async function register(_state: AuthState, formData: FormData): Promise<A
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
     password,
-    options: { emailRedirectTo: `${await origin()}/auth/confirm` },
+    options: {
+      data: { name },
+      emailRedirectTo: `${await origin()}/auth/confirm`,
+    },
   });
 
   if (error) return { error: mapAuthError(error) };

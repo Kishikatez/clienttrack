@@ -28,12 +28,12 @@ export async function POST(request: Request) {
   if (!auth.user) return auth.response;
 
   const body = await readJson(request);
-  if ("error" in body) return apiError(body.error, 400);
+  if ("error" in body && body.error) return apiError(body.error, 400);
 
   const parsed = validateClientInput(body.data);
-  if ("error" in parsed) return apiError(parsed.error, 400);
+  if ("error" in parsed && parsed.error) return apiError(parsed.error, 400);
 
   const result = await createClient(auth.supabase, auth.user.id, parsed.data);
-  if ("error" in result) return apiError(result.error, 400);
+  if ("error" in result && result.error) return apiError(result.error, 400);
   return NextResponse.json(result.data, { status: 201 });
 }
